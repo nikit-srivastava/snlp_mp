@@ -1,4 +1,4 @@
-package snlp.mp;
+package snlp.mp.dbps;
 
 public class DBPResource {
 	private String uri;

@@ -1,4 +1,4 @@
-package snlp.mp;
+package snlp.mp.main;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -8,9 +8,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
 import edu.stanford.nlp.ie.util.RelationTriple;
@@ -22,30 +19,12 @@ import edu.stanford.nlp.simple.Sentence;
  *
  */
 public class App {
-	/*public static void main(String[] args) throws IOException {
-
-		Properties props = new Properties();
-		props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, depparse");
-		props.setProperty("ner.useSUTime", "0");
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-
-		// read some text in the text variable
-		String text = "Donald Trump is the president.";
-
-		// create an empty Annotation just with the given text
-		Annotation document = new Annotation(text);
-
-		// run all Annotators on this text
-		pipeline.annotate(document);
-		System.out.println(document);
-	}*/
 	
 	public static void main(String[] args) throws IOException, UnirestException {
 		
 		/*Path path = Paths.get("C:\\Users\\Nikit\\Downloads\\test.tsv");
 		List<String> ttLines = new ArrayList<String>();
 		Files.lines(path).forEachOrdered(s -> printOneLine(s));*/
-		httpReq();
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\Users\\Nikit\\Downloads\\test.tsv"),"utf-8"));
 		String s = br.readLine();
 		String s2 = br.readLine();
@@ -69,10 +48,6 @@ public class App {
 		System.out.println(sg);
 	}
 	
-	public static void printOneLine(String s) {
-		System.out.println(s);
-	}
-	
 	public static void process(String id, String fact) {
 		//Run NER on the fact
 		//Get dependencyGraph of the fact  
@@ -83,13 +58,6 @@ public class App {
 		//save the ID and result in the output file
 	}
 	
-	public static void httpReq() throws UnirestException {
-		HttpResponse<JsonNode> jsonResponse = Unirest.post("http://model.dbpedia-spotlight.org/en/annotate")
-				  .header("accept", "application/json")
-				  .field("text", "Gerald Green's team is Portland Trail Blazers.")
-				  .field("confidence", "0.35")
-				  .asJson();
-		System.out.println(jsonResponse);
-	}
+	
 	
 }

@@ -1,4 +1,4 @@
-package snlp.mp;
+package snlp.mp.scnlp;
 
 public class NLPProvider {
 

@@ -1,6 +1,9 @@
-package snlp.mp;
+package snlp.mp.misc;
 
 public interface Consts {
+	public static final String DBPWS_URI = "http://model.dbpedia-spotlight.org/en/annotate";
+	public static final String DBPWS_CONFIDENCE = "0.5";
+	
 	public static final String DBPS_TEXT = "@text";
 	public static final String DBPS_CONFIDENCE = "@confidence";
 	public static final String DBPS_SUPPORT = "@support";
