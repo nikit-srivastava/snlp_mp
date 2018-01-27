@@ -8,6 +8,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
+
 import edu.stanford.nlp.ie.util.RelationTriple;
 import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.simple.Sentence;
@@ -35,12 +40,12 @@ public class App {
 		System.out.println(document);
 	}*/
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, UnirestException {
 		
 		/*Path path = Paths.get("C:\\Users\\Nikit\\Downloads\\test.tsv");
 		List<String> ttLines = new ArrayList<String>();
 		Files.lines(path).forEachOrdered(s -> printOneLine(s));*/
-		
+		httpReq();
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\Users\\Nikit\\Downloads\\test.tsv"),"utf-8"));
 		String s = br.readLine();
 		String s2 = br.readLine();
@@ -48,7 +53,7 @@ public class App {
 		Properties props = new Properties();
 		props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, depparse, openie");
 		props.setProperty("ner.useSUTime", "0");
-		Sentence sent = new Sentence("Nobel Prize in Physiology or Medicine is David Baltimore's honour.",props);
+		Sentence sent = new Sentence("Chris Brown (American entertainer) is Charlie Sheen's better half.",props);
 		List<String> nerTags = sent.nerTags();  // [PERSON, O, O, O, O, O, O, O]
 		String firstPOSTag = sent.posTag(0);   // NNP
 		SemanticGraph sg = sent.dependencyGraph();
@@ -68,5 +73,23 @@ public class App {
 		System.out.println(s);
 	}
 	
+	public static void process(String id, String fact) {
+		//Run NER on the fact
+		//Get dependencyGraph of the fact  
+		//find subject relation and object by matching against entities
+		//Find the relation between entities on DBPedia
+		//Check if synonymous and check for negation
+		//synonym check to be done with wordnet and upon failure wordsapi
+		//save the ID and result in the output file
+	}
+	
+	public static void httpReq() throws UnirestException {
+		HttpResponse<JsonNode> jsonResponse = Unirest.post("http://model.dbpedia-spotlight.org/en/annotate")
+				  .header("accept", "application/json")
+				  .field("text", "Gerald Green's team is Portland Trail Blazers.")
+				  .field("confidence", "0.35")
+				  .asJson();
+		System.out.println(jsonResponse);
+	}
 	
 }
