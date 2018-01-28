@@ -50,9 +50,10 @@ public class App {
 	
 	public static void process(String id, String fact) {
 		//Run NER on the fact
-		//Get dependencyGraph of the fact  
+		//Get dependencyGraph of the fact
 		//find subject relation and object by matching against entities
 		//Find the relation between entities on DBPedia
+		//Find all the relations of subject and object in case of failure
 		//Check if synonymous and check for negation
 		//synonym check to be done with wordnet and upon failure wordsapi
 		//save the ID and result in the output file
