@@ -34,7 +34,7 @@ public class NERProvider {
 		HttpResponse<JsonNode> jsonResponse = Unirest.post(Consts.DBPWS_URI).header("accept", "application/json")
 				.field("text", this.document).field("confidence", Consts.DBPWS_CONFIDENCE).asJson();
 
-		DBPResponse response = SNLPUtil.mapJsonObj(jsonResponse.getBody());
+		DBPResponse response = SNLPUtil.mapDBPSJson(jsonResponse.getBody());
 		return response;
 	}
 

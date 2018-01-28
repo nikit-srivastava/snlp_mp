@@ -13,6 +13,7 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import edu.stanford.nlp.ie.util.RelationTriple;
 import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.simple.Sentence;
+import snlp.mp.misc.SNLPUtil;
 
 /**
  * Hello world!
@@ -21,7 +22,7 @@ import edu.stanford.nlp.simple.Sentence;
 public class App {
 	
 	public static void main(String[] args) throws IOException, UnirestException {
-		
+		SNLPUtil.getDMSyn("better half");
 		/*Path path = Paths.get("C:\\Users\\Nikit\\Downloads\\test.tsv");
 		List<String> ttLines = new ArrayList<String>();
 		Files.lines(path).forEachOrdered(s -> printOneLine(s));*/

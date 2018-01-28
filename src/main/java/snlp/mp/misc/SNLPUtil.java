@@ -6,14 +6,19 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 
 import snlp.mp.dbps.DBPResource;
 import snlp.mp.dbps.DBPResponse;
 
 public class SNLPUtil {
 	
-	public static DBPResponse mapJsonObj(JsonNode jsonNode) {
+	public static int limit = 10;
+	
+	public static DBPResponse mapDBPSJson(JsonNode jsonNode) {
 		DBPResponse resp = new DBPResponse();
 		List<DBPResource> resources = new ArrayList<>();
 		resp.setResources(resources);
@@ -42,6 +47,23 @@ public class SNLPUtil {
 		resp.setText(jObj.getString(Consts.DBPS_TEXT));
 		resp.setTypes(jObj.getString(Consts.DBPS_TYPES));
 		return resp;
+	}
+	
+	//Method to get synonyms array from datamuse
+	public static List<String> getDMSyn(String phrase) throws UnirestException{
+		List<String> synList = new ArrayList<>();
+		HttpResponse<JsonNode> jsonResponse = Unirest.get("https://api.datamuse.com/words")
+				  .queryString("ml", phrase)
+				  .asJson();
+		JSONArray jsonArr = jsonResponse.getBody().getArray();
+		String temp;
+		for(int i=0;i<jsonArr.length();i++) {
+			if(i+1>limit)
+				break;
+			temp = jsonArr.getJSONObject(i).getString("word");
+			synList.add(temp);
+		}
+		return synList;
 	}
 
 }

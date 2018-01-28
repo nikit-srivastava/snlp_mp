@@ -5,10 +5,14 @@
 package snlp.mp.dict;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import com.mashape.unirest.http.exceptions.UnirestException;
 
 import edu.smu.tspell.wordnet.Synset;
 import edu.smu.tspell.wordnet.WordNetDatabase;
+import snlp.mp.misc.SNLPUtil;
 
 /**
  *
@@ -27,8 +31,9 @@ public class WordNetExpansion {
      * 
      * @param keyword Input token
      * @return All elements of all synsets of keyword
+     * @throws UnirestException 
      */
-    private Set<String> getSynset(String keyword)
+    private Set<String> getSynset(String keyword) throws UnirestException
     {
         Set<String> result = new HashSet<String>();
         Synset[] synsets = database.getSynsets(keyword);
@@ -38,6 +43,9 @@ public class WordNetExpansion {
                 result.add(s[j]);
             }
         }
+        //Get extra synonyms from DataMuse
+        List<String> synList = SNLPUtil.getDMSyn(keyword);
+        result.addAll(synList);
         return result;
     }
     
@@ -45,8 +53,9 @@ public class WordNetExpansion {
      * tokens using WordNet
      * @param keywords Input string
      * @return  Set of tokens after Wordnet expansion
+     * @throws UnirestException 
      */
-    private Set<String> expand(String keywords)
+    private Set<String> expand(String keywords) throws UnirestException
     {
         String[] split = keywords.split(" ");
         Set<String> result = new HashSet<String>();
@@ -73,13 +82,17 @@ public class WordNetExpansion {
      * @param s1 First input string
      * @param s2 Second input string
      * @return Similarity value between 0 and 1.
+     * @throws UnirestException 
      */
-    public double getExpandedJaccardSimilarity(String s1, String s2)
+    public double getExpandedJaccardSimilarity(String s1, String s2) throws UnirestException
     {
         /*Set<String> tokens1 = expand(s1);
         Set<String> tokens2 = expand(s2);*/
     	Set<String> tokens1 = getSynset(s1);
         Set<String> tokens2 = getSynset(s2);
+        
+        tokens1.addAll(expand(s1));
+        tokens2.addAll(expand(s2));
         
         Set<String> intersection = new HashSet<>(tokens1);
         intersection.retainAll(tokens2);
@@ -89,12 +102,40 @@ public class WordNetExpansion {
         return ((double)intersection.size())/((double)union.size());
     }
     
-    public static void main(String args[])
+    /** Computes the jaccard similarity of two strings after carrying out a WordNet
+     * expansion of each of the tokens of the input string
+     * @param s1 First input string
+     * @param s2 Second input string
+     * @return Similarity value between 0 and 1.
+     * @throws UnirestException 
+     */
+    public double getExpandedJaccardSimilarityAdv(String relation, List<String> relList) throws UnirestException
+    {
+        /*Set<String> tokens1 = expand(s1);
+        Set<String> tokens2 = expand(s2);*/
+    	Set<String> tokens1 = getSynset(relation);
+        Set<String> tokens2 = new HashSet<>();
+        for(String rel: relList)
+        		tokens2.addAll(getSynset(rel));
+        
+        tokens1.addAll(expand(relation));
+        for(String rel: relList)
+        	tokens2.addAll(expand(rel));
+        
+        Set<String> intersection = new HashSet<>(tokens1);
+        intersection.retainAll(tokens2);
+        Set<String> union = new HashSet<>(tokens1);
+        union.addAll(tokens2);
+        
+        return ((double)intersection.size())/((double)union.size());
+    }
+    
+    public static void main(String args[]) throws UnirestException
     {
         WordNetExpansion wne = new WordNetExpansion("C:\\Users\\Nikit\\Downloads\\SPARQL2NL-master\\resources\\wordnet\\dict");
-        String token = "acted";
+        String token = "art";
         System.out.println(wne.getSynset(token));
-        String token2 = "starred in";
+        String token2 = "painting";
         System.out.println(wne.getSynset(token2));
         System.out.println(wne.getExpandedJaccardSimilarity(token, token2));
         
