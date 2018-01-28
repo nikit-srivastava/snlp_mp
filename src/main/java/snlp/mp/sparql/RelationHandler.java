@@ -28,12 +28,112 @@ public class RelationHandler {
 		// process the triple and set the sampleMap
 		if (isSubjURI && isObjURI) {
 			// getRelQuery
+			processRelQ();
 		} else if (isSubjURI && !isObjURI) {
 			// getSubjRelQuery
+			processSubjRelQ();
 		} else if (!isSubjURI && isObjURI) {
 			// getObjRelQuery
+			processObjRelQ();
 		}
 
+	}
+
+	private void processRelQ() {
+		// get the subject and object uri list
+		String subjURI = nlpTriple.getSubject().getUri();
+		String objURI = nlpTriple.getObject().getUri();
+		List<String> subjURIList = getSameAsURIList(subjURI);
+		List<String> objURIList = getSameAsURIList(objURI);
+		// construct the query
+		String queryStr = getRelQuery(subjURIList, objURIList);
+		// run the query
+		Query query = QueryFactory.create(queryStr);
+		List<String> relationList = new ArrayList<>();
+		// Remote execution.
+		try (QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query)) {
+			// Set the DBpedia specific timeout.
+			((QueryEngineHTTP) qexec).addParam("timeout", "10000");
+
+			// Execute.
+			ResultSet rs = qexec.execSelect();
+			RDFNode tempNode;
+			while (rs.hasNext()) {
+				tempNode = rs.next().get("relName");
+				relationList.add(tempNode.toString());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		// Set the sampleMap
+		this.sampleMap.put(this.nlpTriple.getRelation(), relationList);
+	}
+
+	private void processSubjRelQ() {
+		// get the subject uri list
+		String subjURI = nlpTriple.getSubject().getUri();
+		List<String> subjURIList = getSameAsURIList(subjURI);
+		String objName = nlpTriple.getObject().getLabel();
+		// construct the query
+		String queryStr = getSubjRelQuery(subjURIList);
+		// run the query
+		Query query = QueryFactory.create(queryStr);
+		List<String> relationList = new ArrayList<>();
+		// Remote execution.
+		try (QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query)) {
+			// Set the DBpedia specific timeout.
+			((QueryEngineHTTP) qexec).addParam("timeout", "10000");
+
+			// Execute.
+			ResultSet rs = qexec.execSelect();
+			RDFNode tempNode;
+			RDFNode tempNodeObj;
+			// Match the existing object label with all the objects and fetch the relations
+			while (rs.hasNext()) {
+				tempNode = rs.next().get("relName");
+				tempNodeObj = rs.next().get("objName");
+				if (objName.equalsIgnoreCase(tempNodeObj.toString()))
+					relationList.add(tempNode.toString());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		// Set the sampleMap
+		this.sampleMap.put(this.nlpTriple.getRelation(), relationList);
+	}
+
+	private void processObjRelQ() {
+		// get the object uri list
+		String objURI = nlpTriple.getObject().getUri();
+		List<String> objURIList = getSameAsURIList(objURI);
+		String subjName = nlpTriple.getSubject().getLabel();
+		// construct the query
+		String queryStr = getObjRelQuery(objURIList);
+		// run the query
+		Query query = QueryFactory.create(queryStr);
+		List<String> relationList = new ArrayList<>();
+		// Remote execution.
+		try (QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query)) {
+			// Set the DBpedia specific timeout.
+			((QueryEngineHTTP) qexec).addParam("timeout", "10000");
+
+			// Execute.
+			ResultSet rs = qexec.execSelect();
+			RDFNode tempNode;
+			RDFNode tempNodeSubj;
+			// Match the existing subject label with all the subjects and fetch the
+			// relations
+			while (rs.hasNext()) {
+				tempNode = rs.next().get("relName");
+				tempNodeSubj = rs.next().get("subjName");
+				if (subjName.equalsIgnoreCase(tempNodeSubj.toString()))
+					relationList.add(tempNode.toString());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		// Set the sampleMap
+		this.sampleMap.put(this.nlpTriple.getRelation(), relationList);
 	}
 
 	private List<String> getSameAsURIList(String uri) {
@@ -67,9 +167,7 @@ public class RelationHandler {
 		return sameAsUriList;
 	}
 
-	private String getRelQuery() {
-		List<String> subjList = null;
-		List<String> objList = null;
+	private String getRelQuery(List<String> subjList, List<String> objList) {
 		StringBuilder queryStr = new StringBuilder();
 		queryStr.append("PREFIX dbo: <http://swrc.ontoware.org/ontology/> ");
 		queryStr.append("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns/> ");
@@ -92,8 +190,7 @@ public class RelationHandler {
 		return queryStr.toString();
 	}
 
-	private String getSubjRelQuery() {
-		List<String> subjList = null;
+	private String getSubjRelQuery(List<String> subjList) {
 		String tempSubj;
 		StringBuilder queryStr = new StringBuilder();
 		queryStr.append("PREFIX dbo: <http://swrc.ontoware.org/ontology/> ");
@@ -114,8 +211,7 @@ public class RelationHandler {
 		return queryStr.toString();
 	}
 
-	private String getObjRelQuery() {
-		List<String> objList = null;
+	private String getObjRelQuery(List<String> objList) {
 		String tempObj;
 		StringBuilder queryStr = new StringBuilder();
 		queryStr.append("PREFIX dbo: <http://swrc.ontoware.org/ontology/> ");
