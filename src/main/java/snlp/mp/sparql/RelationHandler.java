@@ -170,7 +170,8 @@ public class RelationHandler {
 					sameAsUriList.add(tempNode.toString());
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
+			//TODO: Put logger here
 		}
 
 		return sameAsUriList;

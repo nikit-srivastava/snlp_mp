@@ -56,7 +56,7 @@ public class App {
 		 * Sentence("Chris Brown (American entertainer) is Charlie Sheen's better half."
 		 * , props); SemanticGraph sg = sent.dependencyGraph();
 		 */
-		printRootNodes();
+		runOnTrainData();
 	}
 
 	public static void process(String id, String fact) {
@@ -87,6 +87,43 @@ public class App {
 				getFactScore(id, fact, ioHandler);
 			}
 			// ioHandler.getWriter().write(tags.toString());
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		} finally {
+			if (ioHandler != null)
+				ioHandler.closeIO();
+			System.out.println("Process Finished.");
+		}
+	}
+	
+	public static void runOnTrainData() throws IOException {
+		System.out.println("Process Started.");
+		int correctCount= 0;
+		int count= 0;
+		IOHandler ioHandler = null;
+		try {
+
+			ioHandler = new IOHandler("C:\\Users\\Nikit\\Downloads\\train.tsv",
+					"C:\\Users\\Nikit\\Desktop\\outputTrain.tsv");
+			FactChecker checker;
+			while (true) {
+				String[] doc = ioHandler.getNextDoc();
+				if (doc == null)
+					break;
+				String id = doc[0];
+				String fact = doc[1];
+				checker = new FactChecker(id, fact);
+				boolean marker = Boolean.parseBoolean(doc[2]);
+				int result = checker.checkFact();
+				ioHandler.getWriter().write(id+"\t"+fact+"\tResult:"+result);
+				ioHandler.getWriter().newLine();
+				if(result!=0) {
+					if((result==-1 && !marker) || (result==1 && marker))
+						correctCount++;
+				}
+				System.out.print("\rRecords Processed: "+(++count));
+			}
+			System.out.println("Correctly Identified : "+correctCount+" facts.");
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {

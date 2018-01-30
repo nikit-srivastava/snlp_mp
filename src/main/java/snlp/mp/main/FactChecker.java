@@ -108,81 +108,150 @@ public class FactChecker {
 	}
 
 	private void processVBZRoot(IndexedWord rootWord) {
-		DBPResource tempRes;
+		IndexedWord tempWord;
 		// save relation
-		//find nsubj
-		//save subject
-		//find dobj on relation and save object
+		relation = NLPProvider.getCompoundStr(rootWord, sg);
+		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
+			tempWord = edge.getTarget();
+			// find nsubj
+			if (edgeMatchRel(edge, "nsubj")) {
+				// save subject
+				subject = getEntityObj(tempWord);
+			}
+			// find dobj on relation
+			if (edgeMatchRel(edge, "dobj")) {
+				// save object
+				object = getEntityObj(tempWord);
+			}
+		}
 	}
 
 	private void processVBGRoot(IndexedWord rootWord) {
-		DBPResource tempRes;
-		// save relation
-		//find nsubj
-		//save subject
-		//find dobj on relation and save object
+		IndexedWord tempWord;
+		// save object
+		object = getEntityObj(rootWord);
+		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
+			tempWord = edge.getTarget();
+			// find nsubj
+			if (edgeMatchRel(edge, "nsubj")) {
+				// save subject
+				subject = getEntityObj(tempWord);
+			}
+			// find dobj on object
+			if (edgeMatchRel(edge, "dobj")) {
+				// save relation
+				relation = NLPProvider.getCompoundStr(tempWord, sg);
+			}
+		}
 
 	}
 
 	private void processVBRoot(IndexedWord rootWord) {
-		DBPResource tempRes;
-		// save relation
-		//find nsubj
-		//save subject
-		//find dobj on relation and save object
-
+		IndexedWord tempWord;
+		IndexedWord subTempWord;
+		String subTag;
+		// save subject
+		subject = getEntityObj(rootWord);
+		
+		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
+			tempWord = edge.getTarget();
+			// find dobj
+			if (edgeMatchRel(edge, "dobj")) {
+				// save object
+				object = getEntityObj(tempWord);
+				for (SemanticGraphEdge subEdge : sg.getOutEdgesSorted(tempWord)) {
+					subTempWord = subEdge.getTarget();
+					subTag = subTempWord.tag();
+					// find edge leading to other than NNP or DET on object
+					if (!(subTag.equalsIgnoreCase("NNP") || subTag.equalsIgnoreCase("DET"))) {
+						// save relation
+						relation = NLPProvider.getCompoundStr(subTempWord, sg);
+					}
+				}
+			}
+		}
 	}
 
 	private void processNNRoot(IndexedWord rootWord) {
-		DBPResource tempRes;
+
+		IndexedWord tempWord;
 		// save relation
-		//find nsubj
-		//save subject
-		//find dobj on relation and save object
+		relation = NLPProvider.getCompoundStr(rootWord, sg);
+		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
+			tempWord = edge.getTarget();
+			// find nsubj
+			if (edgeMatchRel(edge, "nsubj")) {
+				// save object
+				object = getEntityObj(tempWord);
+			}
+			// find nmod:poss on relation
+			if (edgeMatchRel(edge, "nmod:poss")) {
+				// save subject
+				subject = getEntityObj(tempWord);
+			}
+		}
 
 	}
 
 	private void processNNSRoot(IndexedWord rootWord) {
-		DBPResource tempRes;
-		// save relation
-		//find nsubj
-		//save subject
-		//find dobj on relation and save object
 
-	}
-
-	private void processNNPRoot(IndexedWord rootWord) {
-		DBPResource tempRes;
+		IndexedWord tempWord;
 		// save object
-		tempRes = SNLPUtil.findMatchingRes(rootWord.originalText(), entityMap);
-		if (tempRes == null) {
-			// Find the compounded string
-			object = new NLPEntity(NLPProvider.getCompoundStr(rootWord, sg), null, false);
-		} else {
-			object = new NLPEntity(tempRes.getSurfaceForm(), tempRes.getUri(), true);
-		}
+		object = getEntityObj(rootWord);
 		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
-			if (edge.getRelation().toString().equalsIgnoreCase("nsubj")) {
-				IndexedWord relNode = edge.getTarget();
+			tempWord = edge.getTarget();
+			// find nsubj
+			if (edgeMatchRel(edge, "nsubj")) {
 				// save relation
-				relation = NLPProvider.getCompoundStr(relNode, sg);
-				// find subject
-				for (SemanticGraphEdge subEdge : sg.getOutEdgesSorted(relNode)) {
-					if (subEdge.getRelation().toString().equalsIgnoreCase("nmod:poss")) {
+				relation = NLPProvider.getCompoundStr(tempWord, sg);
+				// find nmod:poss on relation
+				for (SemanticGraphEdge subEdge : sg.getOutEdgesSorted(tempWord)) {
+					if (edgeMatchRel(subEdge, "nmod:poss")) {
 						// save subj
 						IndexedWord subjNode = subEdge.getTarget();
-						tempRes = SNLPUtil.findMatchingRes(subjNode.originalText(), entityMap);
-						if (tempRes == null) {
-							// Find the compounded string
-							subject = new NLPEntity(NLPProvider.getCompoundStr(subjNode, sg), null, false);
-						} else {
-							subject = new NLPEntity(tempRes.getSurfaceForm(), tempRes.getUri(), true);
-						}
+						subject = getEntityObj(subjNode);
 					}
 				}
 			}
 		}
 
+	}
+
+	private void processNNPRoot(IndexedWord rootWord) {
+		// save object
+		object = getEntityObj(rootWord);
+		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
+			if (edgeMatchRel(edge, "nsubj")) {
+				IndexedWord relNode = edge.getTarget();
+				// save relation
+				relation = NLPProvider.getCompoundStr(relNode, sg);
+				// find subject
+				for (SemanticGraphEdge subEdge : sg.getOutEdgesSorted(relNode)) {
+					if (edgeMatchRel(subEdge, "nmod:poss")) {
+						// save subj
+						IndexedWord subjNode = subEdge.getTarget();
+						subject = getEntityObj(subjNode);
+					}
+				}
+			}
+		}
+
+	}
+
+	private static boolean edgeMatchRel(SemanticGraphEdge edge, String rel) {
+		return edge.getRelation().toString().equalsIgnoreCase(rel);
+	}
+
+	private NLPEntity getEntityObj(IndexedWord tempWord) {
+		NLPEntity resObj;
+		DBPResource tempRes = SNLPUtil.findMatchingRes(tempWord.originalText(), entityMap);
+		if (tempRes == null) {
+			// Find the compounded string
+			resObj = new NLPEntity(NLPProvider.getCompoundStr(tempWord, sg), null, false);
+		} else {
+			resObj = new NLPEntity(tempRes.getSurfaceForm(), tempRes.getUri(), true);
+		}
+		return resObj;
 	}
 
 }
