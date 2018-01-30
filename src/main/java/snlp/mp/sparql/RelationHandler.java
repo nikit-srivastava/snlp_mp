@@ -1,6 +1,7 @@
 package snlp.mp.sparql;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -8,20 +9,24 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
+import snlp.mp.misc.SNLPUtil;
 import snlp.mp.scnlp.NLPTriple;
 
 public class RelationHandler {
 
 	private NLPTriple nlpTriple;
 	private Map<String, List<String>> sampleMap;
+	private static int uriLim = 3;
 
 	public RelationHandler(NLPTriple nlpTriple) {
 		super();
 		this.nlpTriple = nlpTriple;
+		this.sampleMap = new HashMap<>();
 		boolean isSubjURI = nlpTriple.getSubject().isURI();
 		boolean isObjURI = nlpTriple.getObject().isURI();
 		// find the appropriate action set for above triple
@@ -46,7 +51,7 @@ public class RelationHandler {
 		List<String> subjURIList = getSameAsURIList(subjURI);
 		List<String> objURIList = getSameAsURIList(objURI);
 		// construct the query
-		String queryStr = getRelQuery(subjURIList, objURIList);
+		String queryStr = getRelQuery(subjURIList, objURIList, nlpTriple.getObject().getLabel());
 		// run the query
 		Query query = QueryFactory.create(queryStr);
 		List<String> relationList = new ArrayList<>();
@@ -89,10 +94,12 @@ public class RelationHandler {
 			RDFNode tempNode;
 			RDFNode tempNodeObj;
 			// Match the existing object label with all the objects and fetch the relations
+			QuerySolution tempQSol;
 			while (rs.hasNext()) {
-				tempNode = rs.next().get("relName");
-				tempNodeObj = rs.next().get("objName");
-				if (objName.equalsIgnoreCase(tempNodeObj.toString()))
+				tempQSol = rs.next(); 
+				tempNode = tempQSol.get("relName");
+				tempNodeObj = tempQSol.get("objName");
+				if (SNLPUtil.isSimilar(objName, tempNodeObj.toString()))
 					relationList.add(tempNode.toString());
 			}
 		} catch (Exception e) {
@@ -108,7 +115,7 @@ public class RelationHandler {
 		List<String> objURIList = getSameAsURIList(objURI);
 		String subjName = nlpTriple.getSubject().getLabel();
 		// construct the query
-		String queryStr = getObjRelQuery(objURIList);
+		String queryStr = getObjRelQuery(objURIList,nlpTriple.getObject().getLabel());
 		// run the query
 		Query query = QueryFactory.create(queryStr);
 		List<String> relationList = new ArrayList<>();
@@ -123,10 +130,12 @@ public class RelationHandler {
 			RDFNode tempNodeSubj;
 			// Match the existing subject label with all the subjects and fetch the
 			// relations
+			QuerySolution tempQSol;
 			while (rs.hasNext()) {
-				tempNode = rs.next().get("relName");
-				tempNodeSubj = rs.next().get("subjName");
-				if (subjName.equalsIgnoreCase(tempNodeSubj.toString()))
+				tempQSol = rs.next(); 
+				tempNode = tempQSol.get("relName");
+				tempNodeSubj = tempQSol.get("subjName");
+				if (SNLPUtil.isSimilar(subjName, tempNodeSubj.toString()))
 					relationList.add(tempNode.toString());
 			}
 		} catch (Exception e) {
@@ -142,8 +151,8 @@ public class RelationHandler {
 		queryStr.append("PREFIX owl: <http://www.w3.org/2002/07/owl#> ");
 		queryStr.append("SELECT distinct ?same ");
 		queryStr.append("WHERE { ");
-		queryStr.append(" <").append("uri").append("> (owl:sameAs|^owl:sameAs)* ?same. ");
-		queryStr.append("}");
+		queryStr.append(" <").append(uri).append("> (owl:sameAs|^owl:sameAs)* ?same. ");
+		queryStr.append("} LIMIT ").append(uriLim);
 
 		Query query = QueryFactory.create(queryStr.toString());
 
@@ -167,25 +176,27 @@ public class RelationHandler {
 		return sameAsUriList;
 	}
 
-	private String getRelQuery(List<String> subjList, List<String> objList) {
+	private String getRelQuery(List<String> subjList, List<String> objList, String objLabel) {
 		StringBuilder queryStr = new StringBuilder();
 		queryStr.append("PREFIX dbo: <http://swrc.ontoware.org/ontology/> ");
 		queryStr.append("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns/> ");
-		queryStr.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema> ");
-		queryStr.append("SELECT distinct (STR(?relName) as ?relName) ");
+		queryStr.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ");
+		queryStr.append("SELECT distinct ( STR( ?relNameUF ) as ?relName ) ");
 		queryStr.append("WHERE { ");
 		for (int i = 0; i < subjList.size(); i++) {
 			for (int j = 0; j < objList.size(); j++) {
 				queryStr.append(" { <").append(subjList.get(i)).append("> ?rel <").append(objList.get(j))
 						.append("> . } ");
+				queryStr.append(" UNION { <").append(subjList.get(i)).append("> ?rel ?obj . ")
+				.append(" FILTER regex(?obj, \".*").append(objLabel).append(".*\", \"i\") } ");
 				if (j < objList.size() - 1)
 					queryStr.append(" UNION ");
 			}
 			if (i < subjList.size() - 1)
 				queryStr.append(" UNION ");
 		}
-		queryStr.append("?rel rdfs:label ?relName . ");
-		queryStr.append("FILTER langMatches(lang(?relName),'en') ");
+		queryStr.append("?rel rdfs:label ?relNameUF . ");
+		queryStr.append("FILTER langMatches( lang( ?relNameUF ) , 'en' ) . ");
 		queryStr.append("}");
 		return queryStr.toString();
 	}
@@ -195,8 +206,8 @@ public class RelationHandler {
 		StringBuilder queryStr = new StringBuilder();
 		queryStr.append("PREFIX dbo: <http://swrc.ontoware.org/ontology/> ");
 		queryStr.append("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns/> ");
-		queryStr.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema> ");
-		queryStr.append("SELECT ?relName, ?objName ");
+		queryStr.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ");
+		queryStr.append("SELECT ?relName ?objName ");
 		queryStr.append("WHERE { ");
 		for (int i = 0; i < subjList.size(); i++) {
 			tempSubj = subjList.get(i);
@@ -204,30 +215,38 @@ public class RelationHandler {
 			if (i < subjList.size() - 1)
 				queryStr.append(" UNION ");
 		}
-		queryStr.append("?obj rdfs:label ?objName . ");
-		queryStr.append("?rel rdfs:label ?relName . ");
-		queryStr.append("FILTER langMatches(lang(?relName),'en') ");
+		queryStr.append("?obj rdfs:label ?objNameUF . ");
+		queryStr.append("?rel rdfs:label ?relNameUF . ");
+		queryStr.append("FILTER langMatches( lang( ?relNameUF ) , 'en' ) . ");
+		queryStr.append("FILTER langMatches( lang( ?objNameUF ) , 'en' ) . ");
+		queryStr.append(" BIND( STR( ?relNameUF ) as ?relName ) . ");
+		queryStr.append(" BIND( STR( ?objNameUF ) as ?objName ) ");
 		queryStr.append("}");
 		return queryStr.toString();
 	}
 
-	private String getObjRelQuery(List<String> objList) {
+	private String getObjRelQuery(List<String> objList, String objLabel) {
 		String tempObj;
 		StringBuilder queryStr = new StringBuilder();
 		queryStr.append("PREFIX dbo: <http://swrc.ontoware.org/ontology/> ");
 		queryStr.append("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns/> ");
-		queryStr.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema> ");
-		queryStr.append("SELECT ?relName, ?subjName");
+		queryStr.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ");
+		queryStr.append("SELECT ?relName ?subjName ");
 		queryStr.append("WHERE { ");
 		for (int i = 0; i < objList.size(); i++) {
 			tempObj = objList.get(i);
 			queryStr.append(" { ?subj ?rel <").append(tempObj).append(">  . } ");
+			queryStr.append(" UNION { ?subj ?rel ?obj . ")
+			.append(" FILTER regex(?obj, \".*").append(objLabel).append(".*\", \"i\") } ");
 			if (i < objList.size() - 1)
 				queryStr.append(" UNION ");
 		}
-		queryStr.append("?subj rdfs:label ?subjName . ");
-		queryStr.append("?rel rdfs:label ?relName . ");
-		queryStr.append("FILTER langMatches(lang(?relName),'en') ");
+		queryStr.append("?subj rdfs:label ?subjNameUF . ");
+		queryStr.append("?rel rdfs:label ?relNameUF . ");
+		queryStr.append("FILTER langMatches( lang( ?relNameUF ) , 'en' ) . ");
+		queryStr.append("FILTER langMatches( lang( ?subjNameUF ) , 'en' ) . ");
+		queryStr.append(" BIND( STR( ?relNameUF ) as ?relName ) . ");
+		queryStr.append(" BIND( STR( ?subjNameUF ) as ?subjName ) ");
 		queryStr.append("}");
 		return queryStr.toString();
 	}

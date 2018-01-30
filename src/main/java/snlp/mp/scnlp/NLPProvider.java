@@ -1,8 +1,11 @@
 package snlp.mp.scnlp;
 
+import java.util.List;
 import java.util.Properties;
 
+import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.semgraph.SemanticGraph;
+import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.simple.Sentence;
 
 public class NLPProvider {
@@ -27,6 +30,27 @@ public class NLPProvider {
 		Sentence sent = new Sentence(this.document, props);
 		this.depGraph = sent.dependencyGraph();
 	}
+	
+	public static String getCompoundStr(IndexedWord node, SemanticGraph sg) {
+		String res = node.originalText();
+		IndexedWord curNode = node;
+		int count;
+		while(true) {
+			count = 0;
+			List<SemanticGraphEdge> outEdges = sg.getOutEdgesSorted(curNode);
+			for(SemanticGraphEdge edge : outEdges) {
+				if(edge.getRelation().toString().equalsIgnoreCase("compound")) {
+					curNode = edge.getTarget();
+					res = curNode.originalText()+" "+res;
+					count++;
+				}
+			}
+			if(count==0)
+				break;
+		}
+		return res;
+	}
+
 
 	public String getDocument() {
 		return document;

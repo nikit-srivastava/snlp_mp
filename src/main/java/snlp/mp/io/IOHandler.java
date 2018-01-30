@@ -27,7 +27,8 @@ public class IOHandler {
 
 	// Method to get the next document
 	public String[] getNextDoc() throws IOException {
-		return reader.readLine().split("\t");
+		String line = reader.readLine();
+		return line==null?null:line.split("\t");
 	}
 	// Method to write to output file
 	public void writeToFile(String id, boolean result) throws IOException {

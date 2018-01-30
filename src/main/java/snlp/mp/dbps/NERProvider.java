@@ -27,7 +27,8 @@ public class NERProvider {
 		// Send the request to dbpedia server to annotate String
 		DBPResponse response = sendNERReq();
 		// Set the entityMap through response
-		fillEntityMap(response);
+		if(response!=null)
+			fillEntityMap(response);
 	}
 
 	private DBPResponse sendNERReq() throws UnirestException {
