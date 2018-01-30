@@ -1,6 +1,8 @@
 package snlp.mp.main;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import com.mashape.unirest.http.exceptions.UnirestException;
@@ -22,7 +24,9 @@ public class App {
 
 	public static void main(String[] args) throws IOException, UnirestException {
 		//runOnTrainData();
-		runOnTestData();
+		//runOnTestData();
+		//runOnDemoData();
+		runOnTestDataCF();
 	}
 
 	public static void process(String id, String fact) {
@@ -82,7 +86,87 @@ public class App {
 		try {
 
 			ioHandler = new IOHandler("C:\\Users\\Nikit\\Downloads\\test.tsv",
-					"C:\\Users\\Nikit\\Desktop\\resultTest.ttl");
+					"C:\\Users\\Nikit\\Desktop\\resultTest3.ttl");
+			FactChecker checker;
+			String tempLine;
+			while (true) {
+				String[] doc = ioHandler.getNextDoc();
+				if (doc == null)
+					break;
+				String id = doc[0];
+				String fact = doc[1];
+				checker = new FactChecker(id, fact);
+				int result = checker.checkFact();
+				tempLine = SNLPUtil.getFormattedOutput(id, result);
+				ioHandler.getWriter().write(tempLine);
+				ioHandler.getWriter().newLine();
+				System.out.print("\rRecords Processed: " + (++count));
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		} finally {
+			if (ioHandler != null)
+				ioHandler.closeIO();
+			System.out.println("Process Finished.");
+		}
+	}
+	
+	public static void runOnTestDataCF() throws IOException {
+		System.out.println("Process Started.");
+		int count = 0;
+		IOHandler ioHandler = null;
+		List<Double> posScores = new ArrayList<>();
+		List<String> negFactIds = new ArrayList<>();
+		try {
+
+			ioHandler = new IOHandler("C:\\Users\\Nikit\\Downloads\\test.tsv",
+					"C:\\Users\\Nikit\\Desktop\\resultTestCF3.ttl");
+			FactChecker checker;
+			String tempLine;
+			while (true) {
+				String[] doc = ioHandler.getNextDoc();
+				if (doc == null)
+					break;
+				String id = doc[0];
+				String fact = doc[1];
+				checker = new FactChecker(id, fact);
+				double result = checker.checkFact();
+				if(result>0) {
+					result = checker.getSimilarity();
+					posScores.add(result);
+				}
+				if(result>=0) {
+					tempLine = SNLPUtil.getFormattedOutput(id, result);
+					ioHandler.getWriter().write(tempLine);
+					ioHandler.getWriter().newLine();
+				}else {
+					negFactIds.add(id);
+				}
+				System.out.print("\rRecords Processed: " + (++count));
+			}
+			double avg = SNLPUtil.getNegAvgVal(posScores);
+			for(String negFactId : negFactIds) {
+				tempLine = SNLPUtil.getFormattedOutput(negFactId, avg);
+				ioHandler.getWriter().write(tempLine);
+				ioHandler.getWriter().newLine();
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		} finally {
+			if (ioHandler != null)
+				ioHandler.closeIO();
+			System.out.println("Process Finished.");
+		}
+	}
+	
+	public static void runOnDemoData() throws IOException {
+		System.out.println("Process Started.");
+		int count = 0;
+		IOHandler ioHandler = null;
+		try {
+
+			ioHandler = new IOHandler("C:\\Users\\Nikit\\Desktop\\undecidedOutput.tsv",
+					"C:\\Users\\Nikit\\Desktop\\uoOut.ttl");
 			FactChecker checker;
 			String tempLine;
 			while (true) {

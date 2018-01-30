@@ -118,12 +118,29 @@ public class SNLPUtil {
 	 * @param result
 	 * @return String formatted as a RDF triple
 	 */
-	public static String getFormattedOutput(String factId, int result) {
+	public static String getFormattedOutput(String factId, double result) {
 		StringBuilder outLine = new StringBuilder();
 		double dRes = (double) result;
 		outLine.append("<http://swc2017.aksw.org/task2/dataset/").append(factId).append("> ");
 		outLine.append("<http://swc2017.aksw.org/hasTruthValue> ");
 		outLine.append("\"").append(dRes).append("\"^^<http://www.w3.org/2001/XMLSchema#double> .");
 		return outLine.toString();
+	}
+	/**
+	 * Method to calculate negative average for a list of double values
+	 * @param posScores
+	 * @return negative average
+	 */
+	public static double getNegAvgVal(List<Double> posScores) {
+		double avg = -1;
+		double sum = 0;
+		double len = posScores.size();
+		for(double entry : posScores) {
+			sum+=entry;
+		}
+		if(sum>0) {
+			avg = (-1d)*(sum/len);
+		}
+		return avg;
 	}
 }

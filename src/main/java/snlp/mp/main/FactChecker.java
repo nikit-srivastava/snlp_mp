@@ -42,6 +42,8 @@ public class FactChecker {
 
 	private String factId;
 	private String fact;
+	
+	private double similarity;
 
 	public FactChecker(String factId, String fact) {
 		super();
@@ -78,7 +80,7 @@ public class FactChecker {
 				return 0;
 			// synonym check to be done with wordnet
 			WordNetExpansionAdv wne = new WordNetExpansionAdv(Consts.WN_DPATH);
-			double similarity = wne.getExpandedJaccardSimilarityAdv(relation, sampleMap.get(relation));
+			similarity = wne.getExpandedJaccardSimilarityAdv(relation, sampleMap.get(relation));
 			// save the ID and result in the output file
 			if (similarity > 0)
 				cValue = 1;
@@ -135,14 +137,14 @@ public class FactChecker {
 		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
 			tempWord = edge.getTarget();
 			// find nsubj
-			if (edgeMatchRel(edge, "nsubj")) {
+			if (edgeMatchRel(edge, "nsubj",false)) {
 				// save subject
-				subject = getEntityObj(tempWord);
+				subject = getEntityObj(tempWord,false);
 			}
 			// find dobj on relation
-			if (edgeMatchRel(edge, "dobj")) {
+			if (edgeMatchRel(edge, "dobj",false)) {
 				// save object
-				object = getEntityObj(tempWord);
+				object = getEntityObj(tempWord,false);
 			}
 		}
 	}
@@ -155,16 +157,16 @@ public class FactChecker {
 	private void processVBGRoot(IndexedWord rootWord) {
 		IndexedWord tempWord;
 		// save object
-		object = getEntityObj(rootWord);
+		object = getEntityObj(rootWord,false);
 		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
 			tempWord = edge.getTarget();
 			// find nsubj
-			if (edgeMatchRel(edge, "nsubj")) {
+			if (edgeMatchRel(edge, "nsubj",false)) {
 				// save subject
-				subject = getEntityObj(tempWord);
+				subject = getEntityObj(tempWord,false);
 			}
 			// find dobj on object
-			if (edgeMatchRel(edge, "dobj")) {
+			if (edgeMatchRel(edge, "dobj",false)) {
 				// save relation
 				relation = NLPProvider.getCompoundStr(tempWord, sg);
 			}
@@ -182,14 +184,14 @@ public class FactChecker {
 		IndexedWord subTempWord;
 		String subTag;
 		// save subject
-		subject = getEntityObj(rootWord);
+		subject = getEntityObj(rootWord,false);
 
 		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
 			tempWord = edge.getTarget();
 			// find dobj
-			if (edgeMatchRel(edge, "dobj")) {
+			if (edgeMatchRel(edge, "dobj",false)) {
 				// save object
-				object = getEntityObj(tempWord);
+				object = getEntityObj(tempWord,false);
 				for (SemanticGraphEdge subEdge : sg.getOutEdgesSorted(tempWord)) {
 					subTempWord = subEdge.getTarget();
 					subTag = subTempWord.tag();
@@ -216,14 +218,14 @@ public class FactChecker {
 		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
 			tempWord = edge.getTarget();
 			// find nsubj
-			if (edgeMatchRel(edge, "nsubj")) {
+			if (edgeMatchRel(edge, "nsubj",false)) {
 				// save object
-				object = getEntityObj(tempWord);
+				object = getEntityObj(tempWord,false);
 			}
 			// find nmod:poss on relation
-			if (edgeMatchRel(edge, "nmod:poss")) {
+			if (edgeMatchRel(edge, "nmod:poss",false)) {
 				// save subject
-				subject = getEntityObj(tempWord);
+				subject = getEntityObj(tempWord,false);
 			}
 		}
 
@@ -238,19 +240,19 @@ public class FactChecker {
 
 		IndexedWord tempWord;
 		// save object
-		object = getEntityObj(rootWord);
+		object = getEntityObj(rootWord,false);
 		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
 			tempWord = edge.getTarget();
 			// find nsubj
-			if (edgeMatchRel(edge, "nsubj")) {
+			if (edgeMatchRel(edge, "nsubj",false)) {
 				// save relation
 				relation = NLPProvider.getCompoundStr(tempWord, sg);
 				// find nmod:poss on relation
 				for (SemanticGraphEdge subEdge : sg.getOutEdgesSorted(tempWord)) {
-					if (edgeMatchRel(subEdge, "nmod:poss")) {
+					if (edgeMatchRel(subEdge, "nmod:poss",false)) {
 						// save subj
 						IndexedWord subjNode = subEdge.getTarget();
-						subject = getEntityObj(subjNode);
+						subject = getEntityObj(subjNode,false);
 					}
 				}
 			}
@@ -264,19 +266,35 @@ public class FactChecker {
 	 * @param rootWord
 	 */
 	private void processNNPRoot(IndexedWord rootWord) {
+		NLPEntity tempEntity;
 		// save object
-		object = getEntityObj(rootWord);
+		object = getEntityObj(rootWord,false);
 		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
-			if (edgeMatchRel(edge, "nsubj")) {
+			if (edgeMatchRel(edge, "nsubj",false)) {
 				IndexedWord relNode = edge.getTarget();
-				// save relation
-				relation = NLPProvider.getCompoundStr(relNode, sg);
-				// find subject
-				for (SemanticGraphEdge subEdge : sg.getOutEdgesSorted(relNode)) {
-					if (edgeMatchRel(subEdge, "nmod:poss")) {
-						// save subj
-						IndexedWord subjNode = subEdge.getTarget();
-						subject = getEntityObj(subjNode);
+				// Check if this node is an entity
+				tempEntity = getEntityObj(relNode,true);
+				if (tempEntity == null) {
+					// save relation
+					relation = NLPProvider.getCompoundStr(relNode, sg);
+					// find subject
+					for (SemanticGraphEdge subEdge : sg.getOutEdgesSorted(relNode)) {
+						if (edgeMatchRel(subEdge, "nmod:poss",false)) {
+							// save subj
+							IndexedWord subjNode = subEdge.getTarget();
+							subject = getEntityObj(subjNode,false);
+						}
+					}
+				} else {
+					// save subject
+					subject = getEntityObj(relNode,false);
+					// find nmod on subject
+					for (SemanticGraphEdge subEdge : sg.getOutEdgesSorted(relNode)) {
+						if (edgeMatchRel(subEdge, "nmod",true)) {
+							IndexedWord newNode = subEdge.getTarget();
+							// save relation
+							relation = NLPProvider.getCompoundStr(newNode, sg);
+						}
 					}
 				}
 			}
@@ -293,8 +311,13 @@ public class FactChecker {
 	 *            - relation to be compared with that of the edge
 	 * @return true if relation is found
 	 */
-	private static boolean edgeMatchRel(SemanticGraphEdge edge, String rel) {
-		return edge.getRelation().toString().equalsIgnoreCase(rel);
+	private static boolean edgeMatchRel(SemanticGraphEdge edge, String rel, boolean shortMatch) {
+		boolean res = false;
+		if (shortMatch)
+			res = edge.getRelation().getShortName().equalsIgnoreCase(rel);
+		else
+			res = edge.getRelation().toString().equalsIgnoreCase(rel);
+		return res;
 	}
 
 	/**
@@ -304,13 +327,13 @@ public class FactChecker {
 	 *            - node to be searched for
 	 * @return entity represented by the node
 	 */
-	private NLPEntity getEntityObj(IndexedWord tempWord) {
-		NLPEntity resObj;
+	private NLPEntity getEntityObj(IndexedWord tempWord, boolean forcePrecision) {
+		NLPEntity resObj=null;
 		DBPResource tempRes = SNLPUtil.findMatchingRes(tempWord.originalText(), entityMap);
-		if (tempRes == null) {
+		if (tempRes == null && !forcePrecision) {
 			// Find the compounded string
 			resObj = new NLPEntity(NLPProvider.getCompoundStr(tempWord, sg), null, false);
-		} else {
+		} else if (tempRes!=null){
 			resObj = new NLPEntity(tempRes.getSurfaceForm(), tempRes.getUri(), true);
 		}
 		return resObj;
@@ -373,4 +396,12 @@ public class FactChecker {
 		this.fact = fact;
 	}
 
+	public double getSimilarity() {
+		return similarity;
+	}
+
+	public void setSimilarity(double similarity) {
+		this.similarity = similarity;
+	}
+	
 }
