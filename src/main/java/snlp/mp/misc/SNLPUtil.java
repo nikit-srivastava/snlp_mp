@@ -88,5 +88,13 @@ public class SNLPUtil {
 		}
 		return res;
 	}
-
+	
+	public static String getFormattedOutput(String factId, int result) {
+		StringBuilder outLine = new StringBuilder();
+		double dRes = (double) result;
+		outLine.append("<http://swc2017.aksw.org/task2/dataset/").append(factId).append("> ");
+		outLine.append("<http://swc2017.aksw.org/hasTruthValue> ");
+		outLine.append("\"").append(dRes).append("\"^^<http://www.w3.org/2001/XMLSchema#double> .");
+		return outLine.toString();
+	}
 }
