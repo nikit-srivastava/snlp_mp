@@ -1,5 +1,10 @@
 package snlp.mp.scnlp;
-
+/**
+ * Class that stores a triple in a format of Subject Verb Object
+ * Also, it stores RDF resource URI for the subject and object 
+ * @author Nikit
+ *
+ */
 public class NLPTriple {
 	private NLPEntity subject;
 	private String relation;

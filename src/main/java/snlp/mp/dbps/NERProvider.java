@@ -10,7 +10,11 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 
 import snlp.mp.misc.Consts;
 import snlp.mp.misc.SNLPUtil;
-
+/**
+ * Class to process a document for Named Entity Recognition
+ * @author Nikit
+ *
+ */
 public class NERProvider {
 	private String document;
 	private Map<String, DBPResource> entityMap;
@@ -23,6 +27,10 @@ public class NERProvider {
 	}
 
 	// Method to create NER tags for the entities
+	/**
+	 * Method to process the document and fill the entityMap
+	 * @throws UnirestException
+	 */
 	public void processNER() throws UnirestException {
 		// Send the request to dbpedia server to annotate String
 		DBPResponse response = sendNERReq();
@@ -30,7 +38,11 @@ public class NERProvider {
 		if(response!=null)
 			fillEntityMap(response);
 	}
-
+	/**
+	 * Method to send the request to DBPedia Spotlight server to run NER on the fact
+	 * @return - response object from the DBPedia server
+	 * @throws UnirestException
+	 */
 	private DBPResponse sendNERReq() throws UnirestException {
 		HttpResponse<JsonNode> jsonResponse = Unirest.post(Consts.DBPWS_URI).header("accept", "application/json")
 				.field("text", this.document).field("confidence", Consts.DBPWS_CONFIDENCE).asJson();
@@ -38,7 +50,10 @@ public class NERProvider {
 		DBPResponse response = SNLPUtil.mapDBPSJson(jsonResponse.getBody());
 		return response;
 	}
-
+	/**
+	 * Method to fill the entityMap based on the response from the DBPedia Server
+	 * @param response - response from the DBPedia Server
+	 */
 	private void fillEntityMap(DBPResponse response) {
 		
 		for(DBPResource resource : response.getResources()) {

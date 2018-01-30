@@ -7,7 +7,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-
+/**
+ * Class to handle the input and output operations to files in project
+ * @author Nikit
+ *
+ */
 public class IOHandler {
 	private String inputFilePath;
 	private String outputFilePath;
@@ -26,11 +30,22 @@ public class IOHandler {
 	}
 
 	// Method to get the next document
+	/**
+	 * Method to retrieve the next line from the input file
+	 * @return next line
+	 * @throws IOException
+	 */
 	public String[] getNextDoc() throws IOException {
 		String line = reader.readLine();
 		return line==null?null:line.split("\t");
 	}
 	// Method to write to output file
+	/**
+	 * Method to write an Id and Result to output file
+	 * @param id
+	 * @param result
+	 * @throws IOException
+	 */
 	public void writeToFile(String id, boolean result) throws IOException {
 		writer.write(id+"\t"+result);
 		writer.newLine();

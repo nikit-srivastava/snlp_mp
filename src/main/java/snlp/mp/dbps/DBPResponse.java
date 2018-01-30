@@ -1,7 +1,11 @@
 package snlp.mp.dbps;
 
 import java.util.List;
-
+/**
+ * Class to store the DBPedia Spotlight response
+ * @author Nikit
+ *
+ */
 public class DBPResponse {
 
 	private String text;

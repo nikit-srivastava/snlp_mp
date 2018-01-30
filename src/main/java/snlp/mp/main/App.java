@@ -1,32 +1,12 @@
 package snlp.mp.main;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import com.mashape.unirest.http.exceptions.UnirestException;
 
-import edu.stanford.nlp.ie.util.RelationTriple;
-import edu.stanford.nlp.ling.IndexedWord;
-import edu.stanford.nlp.semgraph.SemanticGraph;
-import edu.stanford.nlp.semgraph.SemanticGraphEdge;
-import edu.stanford.nlp.simple.Sentence;
-import snlp.mp.dbps.DBPResource;
-import snlp.mp.dbps.NERProvider;
-import snlp.mp.dict.WordNetExpansion;
 import snlp.mp.io.IOHandler;
 import snlp.mp.misc.SNLPUtil;
-import snlp.mp.scnlp.NLPEntity;
-import snlp.mp.scnlp.NLPProvider;
-import snlp.mp.scnlp.NLPTriple;
-import snlp.mp.sparql.RelationHandler;
 
 /**
  * Hello world!
@@ -41,7 +21,8 @@ public class App {
 	}
 
 	public static void main(String[] args) throws IOException, UnirestException {
-		runOnTrainData();
+		//runOnTrainData();
+		runOnTestData();
 	}
 
 	public static void process(String id, String fact) {

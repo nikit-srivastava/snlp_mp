@@ -18,17 +18,17 @@ import snlp.mp.misc.SNLPUtil;
  *
  * @author ngonga
  */
-public class WordNetExpansion {
+public class WordNetExpansionAdv {
 
     WordNetDatabase database;
 
-    public WordNetExpansion(String dictionary) {
+    public WordNetExpansionAdv(String dictionary) {
         System.setProperty("wordnet.database.dir", dictionary);
         database = WordNetDatabase.getFileInstance();        
     }
     
     /** Expands a single keyword by retrieving all the elements of all its synsets
-     * 
+     *  UPDATE - Synonyms from DataMuse API are also fetched now
      * @param keyword Input token
      * @return All elements of all synsets of keyword
      * @throws UnirestException 
@@ -132,7 +132,7 @@ public class WordNetExpansion {
     
     public static void main(String args[]) throws UnirestException
     {
-        WordNetExpansion wne = new WordNetExpansion("C:\\Users\\Nikit\\Downloads\\SPARQL2NL-master\\resources\\wordnet\\dict");
+        WordNetExpansionAdv wne = new WordNetExpansionAdv("C:\\Users\\Nikit\\Downloads\\SPARQL2NL-master\\resources\\wordnet\\dict");
         String token = "art";
         System.out.println(wne.getSynset(token));
         String token2 = "painting";

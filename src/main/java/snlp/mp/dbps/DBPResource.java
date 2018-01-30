@@ -1,5 +1,9 @@
 package snlp.mp.dbps;
-
+/**
+ * Class to store the DBPedia spotlight resource object
+ * @author Nikit
+ *
+ */
 public class DBPResource {
 	private String uri;
 	private String support;

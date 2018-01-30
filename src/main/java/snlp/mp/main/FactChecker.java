@@ -12,7 +12,7 @@ import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.simple.Sentence;
 import snlp.mp.dbps.DBPResource;
 import snlp.mp.dbps.NERProvider;
-import snlp.mp.dict.WordNetExpansion;
+import snlp.mp.dict.WordNetExpansionAdv;
 import snlp.mp.misc.Consts;
 import snlp.mp.misc.SNLPUtil;
 import snlp.mp.scnlp.NLPEntity;
@@ -20,6 +20,12 @@ import snlp.mp.scnlp.NLPProvider;
 import snlp.mp.scnlp.NLPTriple;
 import snlp.mp.sparql.RelationHandler;
 
+/**
+ * Class to process a fact and provide the Truth value for it
+ * 
+ * @author Nikit
+ *
+ */
 public class FactChecker {
 
 	private static Properties props;
@@ -44,6 +50,12 @@ public class FactChecker {
 	}
 
 	// Method that returns confidence value
+	/**
+	 * Method to analyze the fact and return a truth value
+	 * 
+	 * @return -1 for false, 0 for neutral, +1 for true facts
+	 * @throws UnirestException
+	 */
 	public int checkFact() throws UnirestException {
 		int cValue = 0;
 		// Run NER on the fact
@@ -65,7 +77,7 @@ public class FactChecker {
 			if (sampleMap.isEmpty())
 				return 0;
 			// synonym check to be done with wordnet
-			WordNetExpansion wne = new WordNetExpansion(Consts.WN_DPATH);
+			WordNetExpansionAdv wne = new WordNetExpansionAdv(Consts.WN_DPATH);
 			double similarity = wne.getExpandedJaccardSimilarityAdv(relation, sampleMap.get(relation));
 			// save the ID and result in the output file
 			if (similarity > 0)
@@ -76,6 +88,10 @@ public class FactChecker {
 		return cValue;
 	}
 
+	/**
+	 * Method to process the SemanticGraph of Basic Dependencies in order to find
+	 * the triple of (Subject verb object)
+	 */
 	private void processSG() {
 		String tempTag;
 		for (IndexedWord rootWord : sg.getRoots()) {
@@ -107,6 +123,11 @@ public class FactChecker {
 		}
 	}
 
+	/**
+	 * Method to process rootNodes having VBZ POS tag
+	 * 
+	 * @param rootWord
+	 */
 	private void processVBZRoot(IndexedWord rootWord) {
 		IndexedWord tempWord;
 		// save relation
@@ -126,6 +147,11 @@ public class FactChecker {
 		}
 	}
 
+	/**
+	 * Method to process rootNodes having VBG POS tag
+	 * 
+	 * @param rootWord
+	 */
 	private void processVBGRoot(IndexedWord rootWord) {
 		IndexedWord tempWord;
 		// save object
@@ -146,13 +172,18 @@ public class FactChecker {
 
 	}
 
+	/**
+	 * Method to process rootNodes having VB POS tag
+	 * 
+	 * @param rootWord
+	 */
 	private void processVBRoot(IndexedWord rootWord) {
 		IndexedWord tempWord;
 		IndexedWord subTempWord;
 		String subTag;
 		// save subject
 		subject = getEntityObj(rootWord);
-		
+
 		for (SemanticGraphEdge edge : sg.getOutEdgesSorted(rootWord)) {
 			tempWord = edge.getTarget();
 			// find dobj
@@ -172,6 +203,11 @@ public class FactChecker {
 		}
 	}
 
+	/**
+	 * Method to process rootNodes having NN POS tag
+	 * 
+	 * @param rootWord
+	 */
 	private void processNNRoot(IndexedWord rootWord) {
 
 		IndexedWord tempWord;
@@ -193,6 +229,11 @@ public class FactChecker {
 
 	}
 
+	/**
+	 * Method to process rootNodes having NNS POS tag
+	 * 
+	 * @param rootWord
+	 */
 	private void processNNSRoot(IndexedWord rootWord) {
 
 		IndexedWord tempWord;
@@ -217,6 +258,11 @@ public class FactChecker {
 
 	}
 
+	/**
+	 * Method to process rootNodes having NNP POS tag
+	 * 
+	 * @param rootWord
+	 */
 	private void processNNPRoot(IndexedWord rootWord) {
 		// save object
 		object = getEntityObj(rootWord);
@@ -238,10 +284,26 @@ public class FactChecker {
 
 	}
 
+	/**
+	 * Method to match relation of an edge
+	 * 
+	 * @param edge
+	 *            - edge between two nodes
+	 * @param rel
+	 *            - relation to be compared with that of the edge
+	 * @return true if relation is found
+	 */
 	private static boolean edgeMatchRel(SemanticGraphEdge edge, String rel) {
 		return edge.getRelation().toString().equalsIgnoreCase(rel);
 	}
 
+	/**
+	 * Method to find the given node as an entity in the entityMap
+	 * 
+	 * @param tempWord
+	 *            - node to be searched for
+	 * @return entity represented by the node
+	 */
 	private NLPEntity getEntityObj(IndexedWord tempWord) {
 		NLPEntity resObj;
 		DBPResource tempRes = SNLPUtil.findMatchingRes(tempWord.originalText(), entityMap);
@@ -252,6 +314,63 @@ public class FactChecker {
 			resObj = new NLPEntity(tempRes.getSurfaceForm(), tempRes.getUri(), true);
 		}
 		return resObj;
+	}
+
+	// Setter and Getters
+	public NLPEntity getSubject() {
+		return subject;
+	}
+
+	public void setSubject(NLPEntity subject) {
+		this.subject = subject;
+	}
+
+	public NLPEntity getObject() {
+		return object;
+	}
+
+	public void setObject(NLPEntity object) {
+		this.object = object;
+	}
+
+	public String getRelation() {
+		return relation;
+	}
+
+	public void setRelation(String relation) {
+		this.relation = relation;
+	}
+
+	public Map<String, DBPResource> getEntityMap() {
+		return entityMap;
+	}
+
+	public void setEntityMap(Map<String, DBPResource> entityMap) {
+		this.entityMap = entityMap;
+	}
+
+	public SemanticGraph getSg() {
+		return sg;
+	}
+
+	public void setSg(SemanticGraph sg) {
+		this.sg = sg;
+	}
+
+	public String getFactId() {
+		return factId;
+	}
+
+	public void setFactId(String factId) {
+		this.factId = factId;
+	}
+
+	public String getFact() {
+		return fact;
+	}
+
+	public void setFact(String fact) {
+		this.fact = fact;
 	}
 
 }

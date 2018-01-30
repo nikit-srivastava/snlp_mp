@@ -17,6 +17,13 @@ import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import snlp.mp.misc.SNLPUtil;
 import snlp.mp.scnlp.NLPTriple;
 
+/**
+ * Class to handle the operations related to relation extraction between two
+ * entities.
+ * 
+ * @author Nikit
+ *
+ */
 public class RelationHandler {
 
 	private NLPTriple nlpTriple;
@@ -44,6 +51,9 @@ public class RelationHandler {
 
 	}
 
+	/**
+	 * Method to process a triple where both subject and object are known
+	 */
 	private void processRelQ() {
 		// get the subject and object uri list
 		String subjURI = nlpTriple.getSubject().getUri();
@@ -74,6 +84,9 @@ public class RelationHandler {
 		this.sampleMap.put(this.nlpTriple.getRelation(), relationList);
 	}
 
+	/**
+	 * Method process a triple where only URI of subject is known
+	 */
 	private void processSubjRelQ() {
 		// get the subject uri list
 		String subjURI = nlpTriple.getSubject().getUri();
@@ -96,7 +109,7 @@ public class RelationHandler {
 			// Match the existing object label with all the objects and fetch the relations
 			QuerySolution tempQSol;
 			while (rs.hasNext()) {
-				tempQSol = rs.next(); 
+				tempQSol = rs.next();
 				tempNode = tempQSol.get("relName");
 				tempNodeObj = tempQSol.get("objName");
 				if (SNLPUtil.isSimilar(objName, tempNodeObj.toString()))
@@ -109,13 +122,16 @@ public class RelationHandler {
 		this.sampleMap.put(this.nlpTriple.getRelation(), relationList);
 	}
 
+	/**
+	 * Method process a triple where only URI of object is known
+	 */
 	private void processObjRelQ() {
 		// get the object uri list
 		String objURI = nlpTriple.getObject().getUri();
 		List<String> objURIList = getSameAsURIList(objURI);
 		String subjName = nlpTriple.getSubject().getLabel();
 		// construct the query
-		String queryStr = getObjRelQuery(objURIList,nlpTriple.getObject().getLabel());
+		String queryStr = getObjRelQuery(objURIList, nlpTriple.getObject().getLabel());
 		// run the query
 		Query query = QueryFactory.create(queryStr);
 		List<String> relationList = new ArrayList<>();
@@ -132,7 +148,7 @@ public class RelationHandler {
 			// relations
 			QuerySolution tempQSol;
 			while (rs.hasNext()) {
-				tempQSol = rs.next(); 
+				tempQSol = rs.next();
 				tempNode = tempQSol.get("relName");
 				tempNodeSubj = tempQSol.get("subjName");
 				if (SNLPUtil.isSimilar(subjName, tempNodeSubj.toString()))
@@ -145,6 +161,13 @@ public class RelationHandler {
 		this.sampleMap.put(this.nlpTriple.getRelation(), relationList);
 	}
 
+	/**
+	 * Method to provide a list entities same as that of particular entity
+	 * 
+	 * @param uri
+	 *            - resource URI of entity to find sameAs entities for
+	 * @return list of sameAs entity URIs
+	 */
 	private List<String> getSameAsURIList(String uri) {
 		List<String> sameAsUriList = new ArrayList<>();
 		StringBuilder queryStr = new StringBuilder();
@@ -170,13 +193,25 @@ public class RelationHandler {
 					sameAsUriList.add(tempNode.toString());
 			}
 		} catch (Exception e) {
-			//e.printStackTrace();
-			//TODO: Put logger here
+			// e.printStackTrace();
+			// TODO: Put logger here
 		}
 
 		return sameAsUriList;
 	}
 
+	/**
+	 * Method to generate a SPARQL Query where the URIs of subject and object are
+	 * known
+	 * 
+	 * @param subjList
+	 *            - list of URIs of subject
+	 * @param objList
+	 *            - list of URIs of object
+	 * @param objLabel
+	 *            - label of the object entity
+	 * @return SPARQL query to fetch relation labels
+	 */
 	private String getRelQuery(List<String> subjList, List<String> objList, String objLabel) {
 		StringBuilder queryStr = new StringBuilder();
 		queryStr.append("PREFIX dbo: <http://swrc.ontoware.org/ontology/> ");
@@ -189,7 +224,7 @@ public class RelationHandler {
 				queryStr.append(" { <").append(subjList.get(i)).append("> ?rel <").append(objList.get(j))
 						.append("> . } ");
 				queryStr.append(" UNION { <").append(subjList.get(i)).append("> ?rel ?obj . ")
-				.append(" FILTER regex(?obj, \".*").append(objLabel).append(".*\", \"i\") } ");
+						.append(" FILTER regex(?obj, \".*").append(objLabel).append(".*\", \"i\") } ");
 				if (j < objList.size() - 1)
 					queryStr.append(" UNION ");
 			}
@@ -202,6 +237,13 @@ public class RelationHandler {
 		return queryStr.toString();
 	}
 
+	/**
+	 * Method to generate a SPARQL Query where the URIs of subject is known
+	 * 
+	 * @param subjList
+	 *            - list of URIs of subject
+	 * @return SPARQL query to fetch relation labels
+	 */
 	private String getSubjRelQuery(List<String> subjList) {
 		String tempSubj;
 		StringBuilder queryStr = new StringBuilder();
@@ -226,6 +268,15 @@ public class RelationHandler {
 		return queryStr.toString();
 	}
 
+	/**
+	 * Method to generate a SPARQL Query where the URIs object is known
+	 * 
+	 * @param objList
+	 *            - list of URIs of object
+	 * @param objLabel
+	 *            - label of the object entity
+	 * @return SPARQL query to fetch relation labels
+	 */
 	private String getObjRelQuery(List<String> objList, String objLabel) {
 		String tempObj;
 		StringBuilder queryStr = new StringBuilder();
@@ -237,8 +288,8 @@ public class RelationHandler {
 		for (int i = 0; i < objList.size(); i++) {
 			tempObj = objList.get(i);
 			queryStr.append(" { ?subj ?rel <").append(tempObj).append(">  . } ");
-			queryStr.append(" UNION { ?subj ?rel ?obj . ")
-			.append(" FILTER regex(?obj, \".*").append(objLabel).append(".*\", \"i\") } ");
+			queryStr.append(" UNION { ?subj ?rel ?obj . ").append(" FILTER regex(?obj, \".*").append(objLabel)
+					.append(".*\", \"i\") } ");
 			if (i < objList.size() - 1)
 				queryStr.append(" UNION ");
 		}

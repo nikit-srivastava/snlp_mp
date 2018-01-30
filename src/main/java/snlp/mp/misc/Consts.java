@@ -1,5 +1,9 @@
 package snlp.mp.misc;
-
+/**
+ * Interface to store all the constants variables at one place
+ * @author Nikit
+ *
+ */
 public interface Consts {
 	public static final String WN_DPATH = "C:\\Users\\Nikit\\Downloads\\SPARQL2NL-master\\resources\\wordnet\\dict";
 	

@@ -7,7 +7,11 @@ import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.simple.Sentence;
-
+/**
+ * Class to handle the Basic Dependency Graph of a document.
+ * @author Nikit
+ *
+ */
 public class NLPProvider {
 
 	private String document;
@@ -30,7 +34,12 @@ public class NLPProvider {
 		Sentence sent = new Sentence(this.document, props);
 		this.depGraph = sent.dependencyGraph();
 	}
-	
+	/**
+	 * Method to fetch the compound string for a particular node in a graph
+	 * @param node
+	 * @param sg - graph to look for other related compound nodes
+	 * @return Compound String
+	 */
 	public static String getCompoundStr(IndexedWord node, SemanticGraph sg) {
 		String res = node.originalText();
 		IndexedWord curNode = node;
