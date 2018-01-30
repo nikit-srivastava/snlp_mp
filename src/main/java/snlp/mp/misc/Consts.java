@@ -1,6 +1,8 @@
 package snlp.mp.misc;
 
 public interface Consts {
+	public static final String WN_DPATH = "C:\\Users\\Nikit\\Downloads\\SPARQL2NL-master\\resources\\wordnet\\dict";
+	
 	public static final String DBPWS_URI = "http://model.dbpedia-spotlight.org/en/annotate";
 	public static final String DBPWS_CONFIDENCE = "0.5";
 	

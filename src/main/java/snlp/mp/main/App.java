@@ -114,6 +114,7 @@ public class App {
 		DBPResource tempRes;
 		for (IndexedWord rootWord : sg.getRoots()) {
 			tempTag = rootWord.tag();
+			//NNP root handling
 			if (tempTag.matches("NNP[S]?")) {
 				// tags.add(tempTag);
 				// save object
@@ -169,15 +170,7 @@ public class App {
 
 	public static DBPResource findMatchingRes(String qVal, Map<String, DBPResource> entityMap) {
 		DBPResource res = null;
-		String[] strArr;
 		for (String key : entityMap.keySet()) {
-			/*
-			 * strArr = key.trim().split("\\s"); key.matches(".*"+qVal+".*");
-			 */
-			/*
-			 * if (qVal.equalsIgnoreCase(strArr[0]) ||
-			 * qVal.equalsIgnoreCase(strArr[strArr.length - 1])) return entityMap.get(key);
-			 */
 			if (key.matches(".*" + qVal + ".*"))
 				return entityMap.get(key);
 		}

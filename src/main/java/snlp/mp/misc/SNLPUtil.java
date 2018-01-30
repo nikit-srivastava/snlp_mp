@@ -2,6 +2,7 @@ package snlp.mp.misc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -76,6 +77,15 @@ public class SNLPUtil {
 		if (val2.matches(".*" + val1 + ".*") || val1.matches(".*" + val2 + ".*"))
 			res = true;
 
+		return res;
+	}
+	
+	public static DBPResource findMatchingRes(String qVal, Map<String, DBPResource> entityMap) {
+		DBPResource res = null;
+		for (String key : entityMap.keySet()) {
+			if (key.matches(".*" + qVal + ".*"))
+				return entityMap.get(key);
+		}
 		return res;
 	}
 
